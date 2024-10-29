@@ -1,13 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import fileUpload from 'express-fileupload';
+
 import { dbconnection } from './database/dbconnections.js';
 import { config } from 'dotenv';
-import { messageRouter } from './routes/messageRoute.js';
-import { errorMiddleware } from './middelware/errorsMiddleware.js';
-import { router } from './routes/usersRouter.js';
-import { appointmentRouter } from './routes/appointmentRouter.js';
+
 import { contentRouter } from './routes/contentRouter.js';
 
 config();
@@ -20,21 +17,12 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: [process.env.ADMIN_URL, process.env.FRONT_END_URL],
+    origin: '*', // Allow all origins
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    Credential: true,
+    credentials: true, // Allow credentials
   })
 );
-app.use(
-  fileUpload({
-    useTempFiles: true,
-    tempFileDir: '/temp/',
-  })
-);
-app.use('/api/v1/message', messageRouter);
-app.use('/api/v1/user', router);
-app.use('/api/v1/appointment', appointmentRouter);
+
 app.use('/api/v1/content', contentRouter);
 
 dbconnection();
-app.use(errorMiddleware);

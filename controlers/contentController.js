@@ -1,56 +1,99 @@
-import multer from 'multer'; // Use ES import
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { content } from '../models/contentSchema.js';
 
-// Configure Multer storage
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, '../uploads');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Save files in 'uploads/' folder
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`); // Unique filename
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
-// File filter: Accept only images
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
-    cb(null, true); // Accept the image
+    cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false); // Reject non-image files
+    cb(new Error('Only image files are allowed!'), false);
   }
 };
 
-// Initialize Multer to handle multiple image uploads (max 5 images)
-const upload = multer({ storage, fileFilter }); // Don't call `.array()` here
+const upload = multer({ storage, fileFilter });
 
-// Controller to create new content
+// Upload controller
 const createContent = async (req, res) => {
-  console.log('API endpoint hit');
   try {
-    debugger;
     const { mediaTags, description, orientation } = req.body;
-    console.log(res.body);
-    // Extract file paths from uploaded images
     const imagePaths = req.files.map((file) => file.path);
 
-    // Create a new content entry
     const newContent = new content({
-      mediaTags: mediaTags.split(','), // Convert tags to an array
+      mediaTags: mediaTags.split(','),
       description,
       orientation,
-      images: imagePaths, // Store file paths in DB
+      images: imagePaths,
     });
 
-    // Save the content in the database
     await newContent.save();
+    res
+      .status(201)
+      .json({ message: 'Content created successfully', content: newContent });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-    res.status(201).json({
-      message: 'Content created successfully',
-      content: newContent,
+// List controller
+const listContent = async (req, res) => {
+  try {
+    const contents = await content.find();
+    res.status(200).json(contents);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Edit controller
+const editContent = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updatedContent = await content.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+    res.status(200).json({
+      message: 'Content updated successfully',
+      content: updatedContent,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export { upload, createContent }; // Use ES exports
+// Delete controller
+const deleteContent = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const contentToDelete = await Content.findByIdAndDelete(id);
+    if (contentToDelete) {
+      // Optional: Delete files from the server
+      contentToDelete.images.forEach((imagePath) => fs.unlinkSync(imagePath));
+      res.status(200).json({ message: 'Content deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Content not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { upload, createContent, listContent, editContent, deleteContent };
