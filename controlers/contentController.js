@@ -38,29 +38,6 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// Upload controller
-// const createContent = async (req, res) => {
-//   try {
-//     const { mediaTags, description, orientation } = req.body;
-
-//     // Save the uploaded file paths in the 'images' field
-//     const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
-
-//     const newContent = new content({
-//       mediaTags: mediaTags.split(',').map((tag) => tag.trim()), // Ensure tags are trimmed
-//       description,
-//       orientation,
-//       images: imagePaths, // Store paths under 'images'
-//     });
-
-//     await newContent.save();
-//     res
-//       .status(201)
-//       .json({ message: 'Content created successfully', content: newContent });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 const createContent = async (req, res) => {
   try {
     const { mediaTags, description, orientation } = req.body;
@@ -100,16 +77,23 @@ const listContent = async (req, res) => {
 // Edit controller
 const editContent = async (req, res) => {
   const { id } = req.params;
+
   try {
     const updatedContent = await content.findByIdAndUpdate(id, req.body, {
       new: true,
     });
+
+    if (!updatedContent) {
+      return res.status(404).json({ message: 'Content not found' });
+    }
+
     res.status(200).json({
       message: 'Content updated successfully',
       content: updatedContent,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating content:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 

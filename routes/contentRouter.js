@@ -11,7 +11,7 @@ const router = express.Router();
 
 // Routes
 router.post('/', upload.array('images'), createContent); // Use 'images' as the key for file uploads
-router.get('/', listContent);
+router.get('/list', listContent);
 router.put('/:id', editContent);
 router.delete('/:id', deleteContent);
 

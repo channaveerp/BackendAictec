@@ -33,7 +33,5 @@ app.use(
 );
 
 app.use('/api/v1/content', contentRouter);
-app.use('/api/v1/content/list', contentRouter);
-app.use('/api/v1/content/delete', contentRouter);
 
 dbconnection();
