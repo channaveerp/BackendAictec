@@ -74,7 +74,6 @@ const listContent = async (req, res) => {
   }
 };
 
-// Edit controller
 const editContent = async (req, res) => {
   const { id } = req.params;
 
